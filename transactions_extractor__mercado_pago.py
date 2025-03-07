@@ -1,19 +1,11 @@
 import pandas as pd
 import os
 
-
-# input_file = "input/csv/202502_mp_transactions.csv"
-input_file = "input/csv/202502_transactions__mercado_pago.xlsx"
-output_csv_month = "202502"
-output_file = f"output/csv/{output_csv_month}_transactions__mercado_pago.csv"
-reporting_month = "202502"
-
-# import pandas as pd
-# import os
-
-# # Ruta del archivo XLSX
-# input_file = "/mnt/data/202502_mp_transactions.xlsx"
-# output_file = "/mnt/data/filtered_transactions.csv"
+csv_month = "202503"  # <<<<----- PLEASE, MODIFY IT ACCORDINGLY 
+reporting_month = "2025-03-01"  # <<<<----- PLEASE, MODIFY IT ACCORDINGLY 
+csv_name = "__mercado_pago"
+input_file = f"input/csv/{csv_month}{csv_name}.xlsx"
+output_file = f"output/csv/{csv_month}{csv_name}.csv"
 
 # Cargar el XLSX con manejo de errores
 df = pd.read_excel(input_file, engine="openpyxl")
@@ -26,7 +18,7 @@ df = df[columns_needed]
 df = df[df["TRANSACTION_AMOUNT"] < 0]
 
 # Crear nuevas columnas
-df["reporting_month"] = "2025-02-01"  # Puedes hacer que esto sea dinámico si se necesita
+df["reporting_month"] = reporting_month
 df["event_date"] = pd.to_datetime(df["ORIGIN_DATE"], errors='coerce').dt.date
 df["details"] = df["STORE_NAME"].astype(str).str.replace('"', '') + " " + df["SALE_DETAIL"].astype(str).str.replace('"', '')
 df["amount"] = df["TRANSACTION_AMOUNT"].abs()
@@ -72,3 +64,4 @@ df = df[final_columns]
 df.to_csv(output_file, index=False)
 
 print(f"Archivo procesado y guardado en: {output_file}")
+print(df)

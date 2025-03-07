@@ -2,9 +2,14 @@ import pdfplumber
 import re
 import pandas as pd
 
+csv_month = "202503" # <<<<----- PLEASE, MODIFY IT ACCORDINGLY 
+report_month = "2025-03-01" # <<<<----- PLEASE, MODIFY IT ACCORDINGLY
+csv_name = "__galicia_mastercard"
+input_pdf_file_path = f"input/pdf/{csv_month}{csv_name}.pdf" 
+output_pdf_file_path = f"output/csv/{csv_month}{csv_name}.csv" 
+
 def extract_consumos_galicia_mastercard(pdf_path):
     consumos = []
-    report_month = "2025-02-01"
 
     with pdfplumber.open(pdf_path) as pdf:
         text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
@@ -40,17 +45,15 @@ def extract_consumos_galicia_mastercard(pdf_path):
             return "health_care"
         elif "MANTENIMIENTO" in details.upper():
             return "bank_account_fees"
-        elif "PERSONAL FLOW" in details.upper():
-            return "internet"
         elif "OPENAI" in details.upper() or "GRID" in details.upper():
             return "personal"
         elif "MERPAGO MERCADOLIBRE" in details.upper():
             return "online_shopping"
-        elif "METROGAS" in details.upper() or "YPF" in details.upper() or "EDENOR" in details.upper():
+        elif "METROGAS" in details.upper() or "YPF" in details.upper() or "EDENOR" in details.upper() or "PERSONALFLOW" in details.upper():
             return "services"
         elif "UBER" in details.upper() or "CABIFY" in details.upper() or "DIDI" in details.upper() or "TAXI" in details.upper() or "PASAJESCDP" in details.upper():
             return "transportation"
-        elif "ESTUDIOG01" in details.upper():
+        elif "ESTUDIOG" in details.upper():
             return "contador"
         else:
             return "other"
@@ -67,10 +70,10 @@ def extract_consumos_galicia_mastercard(pdf_path):
         # Determinar si el monto es en ARS o USD basándose en el formato
         if re.match(r"^\d{1,3}(?:\.\d{3})*,\d{2}$", monto):
             moneda = "ARS"
-            monto = -float(monto.replace('.', '').replace(',', '.'))
+            monto = float(monto.replace('.', '').replace(',', '.'))
         else:
             moneda = "USD"
-            monto = -float(monto.replace(',', '.'))
+            monto = float(monto.replace(',', '.'))
 
         consumos.append({
             "report_month": report_month,
@@ -84,7 +87,7 @@ def extract_consumos_galicia_mastercard(pdf_path):
 
     # Procesar fees
     for detalle, monto in pattern_fees:
-        monto = -float(monto.replace('.', '').replace(',', '.'))
+        monto = float(monto.replace('.', '').replace(',', '.'))
         consumos.append({
             "report_month": report_month,
             "event_date": report_month,  # Se usa la fecha de reporte porque los fees no tienen fecha específica
@@ -98,15 +101,9 @@ def extract_consumos_galicia_mastercard(pdf_path):
     df = pd.DataFrame(consumos)
     return df
 
-# Ruta del archivo PDF
-pdf_file_path = "input/pdf/202502__galicia_mastercard.pdf"
+df_consumos = extract_consumos_galicia_mastercard(input_pdf_file_path)
 
-df_consumos = extract_consumos_galicia_mastercard(pdf_file_path)
-
-# Variables for the csv file name
-csv_month = "202502"
-csv_name = "_consumos__galicia_mastercard"
 # Guardar en CSV
-df_consumos.to_csv(f"output/csv/{csv_month}{csv_name}.csv", index=False)
+df_consumos.to_csv(output_pdf_file_path, index=False)
 print(f"Archivo '{csv_month}{csv_name}.csv' guardado con éxito.")
 print(df_consumos)
